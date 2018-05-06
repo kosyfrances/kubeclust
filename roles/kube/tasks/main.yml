@@ -1,0 +1,24 @@
+---
+- name: Install prerequisites
+  apt:
+    name: apt-transport-https
+    update_cache: yes
+
+- name: Add apt signing key
+  apt_key:
+    url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+
+- name: Add to kubernetes.list
+  lineinfile:
+    path: /etc/apt/sources.list.d/kubernetes.list
+    line: 'deb http://apt.kubernetes.io/ kubernetes-xenial main'
+    create: yes
+
+- name: Install kubelet, kubeadm and kubectl
+  apt:
+    name: "{{ item }}"
+    update_cache: yes
+  with_items:
+    - kubelet
+    - kubeadm
+    - kubectl
