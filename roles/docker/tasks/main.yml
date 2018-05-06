@@ -1,0 +1,21 @@
+---
+- name: Install docker
+  apt:
+    name: docker.io
+    update_cache: yes
+
+- name: Create the docker group
+  group:
+    name: docker
+
+- name: Add vagrant user to the docker group
+  user:
+    name: vagrant
+    groups: docker
+    append: yes
+
+- name: Start docker
+  systemd:
+    name: docker
+    state: started
+    enabled: yes
