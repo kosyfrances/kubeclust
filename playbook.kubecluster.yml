@@ -4,3 +4,8 @@
   roles:
     - docker
     - kube
+
+- hosts: master
+  become: yes
+  roles:
+    - master

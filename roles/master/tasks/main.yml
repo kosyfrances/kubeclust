@@ -1,0 +1,45 @@
+---
+- name: Add KUBELET_CGROUP_DRIVER environment variable
+  lineinfile:
+    path: /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+    line: 'Environment="KUBELET_CGROUP_DRIVER=--cgroup-driver=cgroupfs"'
+
+- name: Append $KUBELET_CGROUP_DRIVER to ExecStart=
+  lineinfile:
+    path: /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+    regexp: '^ExecStart=/usr/bin/kubelet'
+    line: 'ExecStart=/usr/bin/kubelet $KUBELET_KUBECONFIG_ARGS $KUBELET_SYSTEM_PODS_ARGS $KUBELET_NETWORK_ARGS $KUBELET_DNS_ARGS $KUBELET_AUTHZ_ARGS $KUBELET_CADVISOR_ARGS $KUBELET_CERTIFICATE_ARGS $KUBELET_EXTRA_ARGS $KUBELET_CGROUP_DRIVER'
+  notify: restart kubelet
+
+- name: Reset all kubeadm installed state
+  command: kubeadm reset
+  ignore_errors: true
+
+- name: Initialise Master node
+  command: kubeadm init --apiserver-advertise-address=192.168.99.20 --pod-network-cidr=192.168.0.0/16
+  register: kubeadm_output
+
+- name: Create .kube directory
+  become: no
+  file:
+    path: /home/vagrant/.kube
+    state: directory
+    owner: vagrant
+    group: vagrant
+  register: kube_dir
+
+- name: Set fact for kubeadm join command
+  set_fact:
+    kubeadm_join_cmd: '{{ kubeadm_output.stdout_lines | last }}'
+
+- name: Copy kube config
+  copy:
+    src: /etc/kubernetes/admin.conf
+    dest: '{{ kube_dir.path }}/config'
+    remote_src: yes
+    owner: vagrant
+    group: vagrant
+
+- name: Deploy pod network to the cluster
+  become: no
+  command: kubectl apply -f https://docs.projectcalico.org/v3.1/getting-started/kubernetes/installation/hosted/kubeadm/1.7/calico.yaml
