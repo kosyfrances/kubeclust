@@ -1,0 +1,7 @@
+---
+- name:  Reset all kubeadm installed state
+  command: kubeadm reset
+  ignore_errors: true
+
+- name: Join cluster
+  command: '{{ hostvars[groups["master"][0]]["kubeadm_join_cmd"] }}'

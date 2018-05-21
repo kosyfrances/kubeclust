@@ -9,3 +9,8 @@
   become: yes
   roles:
     - master
+
+- hosts: worker
+  become: yes
+  roles:
+    - cluster
