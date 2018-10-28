@@ -1,6 +1,6 @@
 - name: Drain nodes
   command: kubectl drain {{ item }} --delete-local-data --force --ignore-daemonsets
-  with_items:
+  loop:
     - worker1
     - worker2
     - kubemaster
@@ -8,12 +8,12 @@
 
 - name: Delete nodes
   command: kubectl delete node {{ item }}
-  with_items:
+  loop:
     - worker1
     - worker2
     - kubemaster
   ignore_errors: true
 
 - name: Reset kubeadm installed state
-  command: kubeadm reset
+  command: kubeadm reset --force
   become: yes

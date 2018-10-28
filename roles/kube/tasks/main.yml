@@ -16,9 +16,5 @@
 
 - name: Install kubelet, kubeadm and kubectl
   apt:
-    name: "{{ item }}"
+    name: ['kubelet=1.10.2-00', 'kubeadm=1.10.2-00', 'kubectl=1.10.2-00']
     update_cache: yes
-  with_items:
-    - kubelet
-    - kubeadm
-    - kubectl
