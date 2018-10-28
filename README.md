@@ -5,6 +5,7 @@
 ### Prerequisites
 * [Virtual environment](https://docs.python.org/3/library/venv.html) with Python3
 * [Virtualbox](https://www.virtualbox.org/)
+* [Vagrant](https://www.vagrantup.com/)
 
 ### Installation
 In the virtual environment, run
@@ -24,6 +25,7 @@ worker1 – 192.168.99.21
 worker2 – 192.168.99.22
 
 ### Create kubernetes cluster
+In the virtual environment created earlier, run
 ```
 $ make cluster
 ```
