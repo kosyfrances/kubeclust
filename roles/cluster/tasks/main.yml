@@ -1,6 +1,6 @@
 ---
 - name:  Reset all kubeadm installed state
-  command: kubeadm reset
+  command: kubeadm reset --force
   ignore_errors: true
 
 - name: Join cluster

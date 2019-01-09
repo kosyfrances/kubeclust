@@ -1,15 +1,8 @@
 ---
-- name: Add KUBELET_CGROUP_DRIVER environment variable
-  lineinfile:
-    path: /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
-    line: 'Environment="KUBELET_CGROUP_DRIVER=--cgroup-driver=cgroupfs"'
-
-- name: Append $KUBELET_CGROUP_DRIVER to ExecStart=
-  lineinfile:
-    path: /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
-    regexp: '^ExecStart=/usr/bin/kubelet'
-    line: 'ExecStart=/usr/bin/kubelet $KUBELET_KUBECONFIG_ARGS $KUBELET_SYSTEM_PODS_ARGS $KUBELET_NETWORK_ARGS $KUBELET_DNS_ARGS $KUBELET_AUTHZ_ARGS $KUBELET_CADVISOR_ARGS $KUBELET_CERTIFICATE_ARGS $KUBELET_EXTRA_ARGS $KUBELET_CGROUP_DRIVER'
-  notify: restart kubelet
+- name: Start kubelet
+  service:
+    name: kubelet
+    state: started
 
 - name: Reset all kubeadm installed state
   command: kubeadm reset --force
@@ -42,4 +35,7 @@
 
 - name: Deploy pod network to the cluster
   become: no
-  command: kubectl apply -f https://docs.projectcalico.org/v3.1/getting-started/kubernetes/installation/hosted/kubeadm/1.7/calico.yaml
+  command: kubectl apply -f {{ item }}
+  loop:
+    - https://docs.projectcalico.org/v3.3/getting-started/kubernetes/installation/hosted/rbac-kdd.yaml
+    - https://docs.projectcalico.org/v3.3/getting-started/kubernetes/installation/hosted/kubernetes-datastore/calico-networking/1.7/calico.yaml
