@@ -1,7 +1,7 @@
 ---
 - name: Install docker
   apt:
-    name: docker.io=18.06.1-0ubuntu1~18.04.1
+    name: docker.io=18.06.1-0ubuntu1.2~18.04.1
     update_cache: yes
 
 - name: Create the docker group
