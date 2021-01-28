@@ -1,9 +1,4 @@
 ---
-- name: Start kubelet
-  service:
-    name: kubelet
-    state: started
-
 - name: Reset all kubeadm installed state
   command: kubeadm reset --force
   ignore_errors: true
@@ -11,6 +6,10 @@
 - name: Initialise Master node
   command: kubeadm init --apiserver-advertise-address=192.168.99.20 --pod-network-cidr=192.168.0.0/16
   register: kubeadm_output
+
+- name: Set fact for kubeadm join command which will be used later
+  set_fact:
+    kubeadm_join_cmd: '{{ kubeadm_output.stdout_lines[-2][:-2] }}{{ kubeadm_output.stdout_lines[-1] }}'
 
 - name: Create .kube directory
   become: no
@@ -21,10 +20,6 @@
     group: vagrant
   register: kube_dir
 
-- name: Set fact for kubeadm join command
-  set_fact:
-    kubeadm_join_cmd: '{{ kubeadm_output.stdout_lines | last }}'
-
 - name: Copy kube config
   copy:
     src: /etc/kubernetes/admin.conf
@@ -33,9 +28,11 @@
     owner: vagrant
     group: vagrant
 
+- name: Copy calico manifest to master
+  copy:
+    src: calico.yml
+    dest: /home/vagrant/calico.yml
+
 - name: Deploy pod network to the cluster
   become: no
-  command: kubectl apply -f {{ item }}
-  loop:
-    - https://docs.projectcalico.org/v3.3/getting-started/kubernetes/installation/hosted/rbac-kdd.yaml
-    - https://docs.projectcalico.org/v3.3/getting-started/kubernetes/installation/hosted/kubernetes-datastore/calico-networking/1.7/calico.yaml
+  command: kubectl apply -f /home/vagrant/calico.yml
