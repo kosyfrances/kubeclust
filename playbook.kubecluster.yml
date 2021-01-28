@@ -13,4 +13,4 @@
 - hosts: worker
   become: yes
   roles:
-    - cluster
+    - join

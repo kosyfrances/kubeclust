@@ -1,7 +1,12 @@
 ---
+- name: Install containerd
+  apt:
+    name: containerd=1.3.3-0ubuntu2
+    update_cache: yes
+
 - name: Install docker
   apt:
-    name: docker.io=18.06.1-0ubuntu1.2~18.04.1
+    name: docker.io=19.03.8-0ubuntu1.20.04.1
     update_cache: yes
 
 - name: Create the docker group
