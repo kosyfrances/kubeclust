@@ -1,4 +1,5 @@
 # Kubeclust
+![build](https://github.com/kosyfrances/kubeclust/workflows/build/badge.svg)
 
 [Kubeclust](https://kosyfrances.github.io/kubernetes-cluster/) sets up a kubernetes 1.20.2 cluster on three VirtualBox virtual machines (one master and two workers) running Ubuntu 20.04 LTS using [kubeadm](https://kubernetes.io/docs/reference/setup-tools/kubeadm/).
 
