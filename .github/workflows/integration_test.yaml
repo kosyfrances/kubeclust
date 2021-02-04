@@ -1,0 +1,38 @@
+---
+# Why using macOS runners?
+# Linux runners at GitHub Actions use the Azure Standard_DS2_v2 instance type.
+# https://docs.microsoft.com/azure/virtual-machines/dv2-dsv2-series#dsv2-series
+# This type has no support for  hardware virtualisation support (VT-x) which
+# makes it impossible to use Vagrant with Virtualbox.
+# Virtualbox is only able to run 32bit OS without VT-x support, without SMP and
+# only one CPU.
+# The macOS runner has VT-x support and comes with Virtualbox and Vagrant preinstalled.
+
+name: build
+on: [push, workflow_dispatch]
+jobs:
+  integration_test:
+    runs-on: macos-10.15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Set up Python 3.9.1
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.9.1"
+      - name: Create Python 3 virtualenv
+        uses: syphar/restore-virtualenv@v1
+      - name: Install Python 3 requirements
+        run: pip install -r requirements.txt
+      - name: Spawn Vagrant VMs
+        run: vagrant up
+      - name: Make cluster
+        run: make cluster
+      - name: Wait for node kubemaster to be ready
+        run: vagrant ssh -c 'kubectl wait --for=condition=Ready node/kubemaster --timeout=120s' kubemaster
+      - name: Wait for node worker1 to be ready
+        run: vagrant ssh -c 'kubectl wait --for=condition=Ready node/worker1 --timeout=120s' kubemaster
+      - name: Wait for node worker2 to be ready
+        run: vagrant ssh -c 'kubectl wait --for=condition=Ready node/worker2 --timeout=120s' kubemaster
+      - name: Get nodes
+        run: vagrant ssh -c 'kubectl get nodes' kubemaster
