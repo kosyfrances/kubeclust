@@ -5,3 +5,14 @@
 
 - name: Join cluster
   command: '{{ hostvars[groups["master"][0]]["kubeadm_join_cmd"] }}'
+
+- name: Update kubelet configuration
+  template:
+    src: templates/kubelet.j2
+    dest: /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+
+- name: Reload kubelet configuration
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    name: kubelet
