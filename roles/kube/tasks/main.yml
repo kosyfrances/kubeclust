@@ -21,7 +21,7 @@
 
 - name: Hold kubelet, kubeadm and kubectl
   dpkg_selections:
-    name: "{{ item }}"
+    name: '{{ item }}'
     selection: hold
   with_items:
     - kubelet
