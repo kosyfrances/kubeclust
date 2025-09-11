@@ -1,0 +1,65 @@
+---
+name: build
+on: [push, workflow_dispatch]
+jobs:
+  integration_test:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Install Python 3 requirements
+        run: pip install -r requirements.txt
+
+      - name: Add upstream packages source for VirtualBox
+        run: |
+          wget -q https://www.virtualbox.org/download/oracle_vbox_2016.asc -O- | sudo gpg --dearmor -o /usr/share/keyrings/oracle-virtualbox.gpg
+          echo "deb [signed-by=/usr/share/keyrings/oracle-virtualbox.gpg] https://download.virtualbox.org/virtualbox/debian jammy contrib" | sudo tee /etc/apt/sources.list.d/virtualbox.list
+
+      - name: Add upstream package source for Vagrant
+        run: |
+          wget -O - https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(grep -oP '(?<=UBUNTU_CODENAME=).*' /etc/os-release || lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+
+      - name: Install VirtualBox and Vagrant
+        run: |
+          sudo apt update
+          sudo apt install -y --no-install-recommends virtualbox-7.1 vagrant
+
+      - name: Unload KVM module to enable virtualisation with VirtualBox
+        run: |
+          if lsmod | grep -q kvm_amd; then
+            echo 'Unload KVM module for AMD CPU'
+            sudo modprobe -v -r kvm_amd
+          else
+            echo 'Unload KVM module for Intel CPU'
+            sudo modprobe -v -r kvm_intel
+          fi
+          sudo modprobe -v -r kvm
+
+      - name: Spawn Vagrant VMs
+        run: vagrant up
+
+      - name: Make cluster
+        run: make cluster
+
+      - name: Wait for node kubemaster to be ready
+        run: vagrant ssh -c 'kubectl wait --for=condition=Ready node/kubemaster --timeout=120s' kubemaster
+
+      - name: Wait for node worker1 to be ready
+        run: vagrant ssh -c 'kubectl wait --for=condition=Ready node/worker1 --timeout=120s' kubemaster
+
+      - name: Wait for node worker2 to be ready
+        run: vagrant ssh -c 'kubectl wait --for=condition=Ready node/worker2 --timeout=120s' kubemaster
+
+      - name: Get nodes
+        run: vagrant ssh -c 'kubectl get nodes' kubemaster
+
+      - name: Wait for all pods to be ready
+        run: vagrant ssh -c 'kubectl wait --for=condition=Ready pod --all --all-namespaces --timeout=180s' kubemaster
